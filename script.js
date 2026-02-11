@@ -9,10 +9,10 @@ let twibbonImg = new Image();
 let imgX = 0, imgY = 0, imgScale = 1;
 let isDragging = false, startX, startY;
 
-// Konfigurasi Template (Sesuaikan nama file Anda di sini)
+// Konfigurasi Template
 const templates = {
-    '1:1': 'TWIBBON 11.png', // Ganti dengan file square Anda
-    '9:16': 'TWIBBON 916.png' // Ganti dengan file portrait Anda
+    '1:1': 'TWIBBON 11.png',
+    '9:16': 'TWIBBON 916.png'
 };
 
 function startEditor(w, h) {
@@ -24,19 +24,39 @@ function startEditor(w, h) {
     
     twibbonImg.src = templates[ratio];
     twibbonImg.onload = () => {
-        // Set Canvas ke resolusi asli template (HD)
-        canvas.width = twibbonImg.naturalWidth;
-        canvas.height = twibbonImg.naturalHeight;
+        // TAMPILAN EDITOR: Kita batasi ukuran canvas di layar (misal max 800px)
+        // Agar ringan saat render real-time
+        const displayWidth = 800; 
+        const scaleFactor = displayWidth / twibbonImg.naturalWidth;
         
-        // Posisi awal di tengah
+        canvas.width = displayWidth;
+        canvas.height = twibbonImg.naturalHeight * scaleFactor;
+        
+        // Posisi awal di tengah (skala display)
         imgX = canvas.width / 2;
         imgY = canvas.height / 2;
         draw();
     };
 }
 
-function goBack() {
-    location.reload(); // Cara termudah untuk reset state
+function draw() {
+    // Menggunakan drawing ringan untuk preview
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Matikan smoothing untuk performa ekstra saat dragging (opsional)
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'low'; // Rendah saat edit agar cepat
+
+    if (userImg.src) {
+        ctx.save();
+        ctx.translate(imgX, imgY);
+        ctx.scale(imgScale, imgScale);
+        ctx.drawImage(userImg, -userImg.width / 2, -userImg.height / 2);
+        ctx.restore();
+    }
+
+    // Gambar twibbon menyesuaikan ukuran canvas display
+    ctx.drawImage(twibbonImg, 0, 0, canvas.width, canvas.height);
 }
 
 // Handler Foto
@@ -45,7 +65,8 @@ uploadFoto.addEventListener('change', (e) => {
     reader.onload = (event) => {
         userImg = new Image();
         userImg.onload = () => {
-            imgScale = (canvas.width / userImg.width); // Fit to width awal
+            // Skala awal menyesuaikan lebar canvas display
+            imgScale = (canvas.width / userImg.width);
             zoomRange.value = imgScale;
             draw();
         };
@@ -54,22 +75,44 @@ uploadFoto.addEventListener('change', (e) => {
     if (e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
 });
 
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+// --- LOGIKA DOWNLOAD (RENDER RESOLUSI ASLI) ---
+downloadBtn.addEventListener('click', () => {
+    // 1. Buat canvas bayangan (tidak terlihat) dengan ukuran asli HD
+    const offCanvas = document.createElement('canvas');
+    const offCtx = offCanvas.getContext('2d');
     
+    const originalWidth = twibbonImg.naturalWidth;
+    const originalHeight = twibbonImg.naturalHeight;
+    offCanvas.width = originalWidth;
+    offCanvas.height = originalHeight;
+
+    // 2. Hitung rasio perbedaan antara preview dan asli
+    const ratio = originalWidth / canvas.width;
+
+    // 3. Gambar di canvas bayangan dengan koordinat yang dikalikan ratio
     if (userImg.src) {
-        ctx.save();
-        ctx.translate(imgX, imgY);
-        ctx.scale(imgScale, imgScale);
-        
-        // Render foto di tengah (Kualitas Asli)
-        ctx.drawImage(userImg, -userImg.width / 2, -userImg.height / 2);
-        ctx.restore();
+        offCtx.save();
+        offCtx.translate(imgX * ratio, imgY * ratio);
+        offCtx.scale(imgScale * ratio, imgScale * ratio);
+        offCtx.imageSmoothingEnabled = true;
+        offCtx.imageSmoothingQuality = 'high'; // Kualitas tertinggi untuk hasil akhir
+        offCtx.drawImage(userImg, -userImg.width / 2, -userImg.height / 2);
+        offCtx.restore();
     }
 
-    // Render Twibbon (Kualitas Asli) di atasnya
-    ctx.drawImage(twibbonImg, 0, 0, canvas.width, canvas.height);
-}
+    // 4. Gambar twibbon asli
+    offCtx.drawImage(twibbonImg, 0, 0, originalWidth, originalHeight);
+
+    // 5. Download dari canvas bayangan
+    const dataURL = offCanvas.toDataURL("image/png", 1.0);
+    const link = document.createElement('a');
+    link.download = `Twibbon_HD_${Date.now()}.png`;
+    link.href = dataURL;
+    link.click();
+});
+
+// Sisanya (Zoom, Drag, Pointer) tetap sama menggunakan variabel imgX, imgY, imgScale
+// karena mereka sudah terikat dengan koordinat canvas display.
 
 // Zoom
 zoomRange.addEventListener('input', (e) => {
