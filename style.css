@@ -191,6 +191,43 @@ body {
     box-shadow: var(--shadow-sm);
 }
 
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.btn-zoom {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-zoom:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btn-zoom:active {
+    transform: scale(0.9);
+}
+
+#zoomRange {
+    flex-grow: 1;
+    margin-bottom: 0 !important; /* Menimpa margin bawah yang lama */
+}
+
 .btn-icon {
     width: 40px;
     height: 40px;
