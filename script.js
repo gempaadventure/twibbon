@@ -79,6 +79,23 @@ uploadFoto.addEventListener('change', (e) => {
     if (e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
 });
 
+
+// Fungsi untuk tombol Plus dan Minus
+function adjustZoom(delta) {
+    if (!userImg.src) return; // Jangan jalankan jika belum ada foto
+    
+    let currentValue = parseFloat(zoomRange.value);
+    let newValue = currentValue + delta;
+    
+    // Pastikan tetap dalam batas min 0.1 dan max 5
+    if (newValue < 0.1) newValue = 0.1;
+    if (newValue > 5) newValue = 5;
+    
+    zoomRange.value = newValue;
+    imgScale = newValue;
+    draw();
+}
+
 // DOWNLOAD HD DENGAN NOTIFIKASI PROSES
 downloadBtn.addEventListener('click', async () => {
     if (!userImg.src) {
