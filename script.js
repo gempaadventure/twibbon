@@ -12,7 +12,7 @@ let animationFrameId = null;
 
 const templates = {
     '1:1': 'TWIBBON 11.png',
-    '9:16': 'TWIBBON 916.png'
+    '9:16': 'TWIBBON 916 test.png'
 };
 
 function startEditor(w, h) {
@@ -205,3 +205,4 @@ function goBack() {
     document.getElementById('step2').classList.add('hidden');
     document.getElementById('step1').classList.remove('hidden');
 }
+
